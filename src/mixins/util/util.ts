@@ -2,7 +2,7 @@
 // © MIT license
 
 import {omit} from 'lodash-es'
-import type {SceneItem, Source, Input} from '../../obs/types.ts'
+import type {SceneItem, Source} from '../../obs/types.ts'
 
 export interface Tag {
   key: string | null
