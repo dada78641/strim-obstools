@@ -59,6 +59,14 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
     }
 
     /**
+     * Returns a scene with scene items.
+     */
+    public async getSceneWithSceneItems(sceneUuid: string): Promise<SceneItem[]> {
+      const sceneItems = await this.obs.call('GetSceneItemList', {sceneUuid})
+      return sceneItems.sceneItems as unknown as SceneItem[]
+    }
+
+    /**
      * Adds _scene references to a list of scenes with scene items.
      */
     public async applySceneReferences(scenesWithSceneItems: SceneWithSceneItems[]): Promise<SceneWithSceneItems[]> {

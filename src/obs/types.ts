@@ -1,6 +1,8 @@
 // @dada78641/strim-obstools <https://github.com/dada78641/strim-obstools>
 // © MIT license
 
+import type {JsonObject} from './json.ts'
+
 // This file contains additional types for data returned by obs-websocket-js.
 
 export type BlendMode = 
@@ -26,6 +28,11 @@ export type BoundsType =
   'OBS_BOUNDS_SCALE_TO_WIDTH' |
   'OBS_BOUNDS_SCALE_TO_HEIGHT' |
   'OBS_BOUNDS_MAX_ONLY'
+
+export type MonitoringType =
+  'OBS_MONITORING_TYPE_NONE' |
+  'OBS_MONITORING_TYPE_MONITOR_ONLY' |
+  'OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT'
 
 export interface Scene {
   sceneIndex: number
@@ -84,3 +91,46 @@ export interface SceneItemTransform {
   sourceWidth: number
   width: number
 }
+
+export interface Input {
+  inputKind: string
+  inputKindCaps: number
+  inputName: string
+  inputUuid: string
+  unversionedInputKind: string
+}
+
+export interface InputVolume {
+  inputVolumeDb: number
+  inputVolumeMul: number
+}
+
+export interface InputAudioMonitorType {
+  monitorType: MonitoringType
+}
+
+export interface AudioInput {
+  inputName: string
+  inputUuid: string
+  inputKind: string
+  inputSettings: InputSettings
+}
+
+export interface AudioInputMetadata {
+  inputUuid: string
+  inputKind: string
+  inputSettings: InputSettings
+  monitorType: MonitoringType
+  inputVolumeDb: number
+  inputVolumeMul: number
+}
+
+export type InputSettings = {
+  fps: number
+  fps_custom: boolean
+  width: number
+  height: number
+  reroute_audio: boolean
+  url: string
+  css: string
+} | JsonObject
