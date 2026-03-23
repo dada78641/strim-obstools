@@ -69,6 +69,11 @@ export class ObsConnection extends EventEmitter<ConnectionEvents> {
     return this.tryConnect()
   }
 
+  async disconnect(): Promise<void> {
+    await this.obs.disconnect()
+    this.connected = false
+  }
+
   private async tryConnect(): Promise<void> {
     if (this.connected) {
       return
