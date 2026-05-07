@@ -39,6 +39,8 @@ export interface ObsIdentificationParams {
 export class ObsConnection extends EventEmitter<ConnectionEvents> {
   public obs = new OBSWebSocket()
   public connected = false
+  public verboseConnectionState = false
+  private logConnectionState: boolean | null = null
   private logger = createLogger({identifier: 'ObsConnection', color: 'blue'})
   private reconnect = new ReconnectController()
   private credentials: ObsCredentials = {address: null, password: null}
@@ -92,30 +94,39 @@ export class ObsConnection extends EventEmitter<ConnectionEvents> {
       ])
       this.connected = true
       this.reconnect.reset()
-      this.logger.log('connected')
+      this.logConnection(true, false, 'connected')
       this.emit('connected')
       this.attachEvents()
       this.scheduleReady()
     }
     catch (err: any) {
-      this.logger.error('connection failed: %o', err?.message)
+      this.logConnection(false, false, 'connection failed: %o', err?.message)
       this.emit('connection_failed', err)
       this.scheduleReconnect()
     }
+  }
+
+  private logConnection(connectionState: boolean | null, alwaysLog: boolean, ...message: any[]) {
+    // If we're still in the same state, don't log.
+    if (connectionState === this.logConnectionState && !alwaysLog && !this.verboseConnectionState) {
+      return;
+    }
+    this.logConnectionState = connectionState
+    this.logger.log(...message)
   }
 
   private attachEvents() {
     this.obs.on('ConnectionClosed', () => {
       if (this.connected) {
         this.connected = false
-        this.logger.log('disconnected')
+        this.logConnection(false, true, 'disconnected')
         this.emit('disconnected')
         this.scheduleReconnect()
       }
     })
 
     this.obs.on('ConnectionError', (err: Error) => {
-      this.logger.error('error', err)
+      this.logConnection(false, true, 'error', err)
       this.emit('error', err)
     })
   }
@@ -143,7 +154,7 @@ export class ObsConnection extends EventEmitter<ConnectionEvents> {
 
   private async scheduleReconnect() {
     const delay = this.reconnect.nextDelay()
-    this.logger.log('reconnecting', {delay})
+    this.logConnection(false, false, 'reconnecting', {delay})
     this.emit('reconnecting', delay)
     await sleep(delay)
     this.tryConnect()

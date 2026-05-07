@@ -18,10 +18,19 @@ export class ObsToolsBase {
   off = this.conn.off.bind(this.conn)
   once = this.conn.once.bind(this.conn)
   
-  constructor(credentials?: ObsCredentials, identificationParams?: ObsIdentificationParams, autoConnect: boolean = true) {
+  constructor(
+    credentials?: ObsCredentials,
+    identificationParams?: ObsIdentificationParams,
+    autoConnect: boolean = true,
+    verboseConnection: boolean = false,
+  ) {
     this.obs = this.conn.obs
     this.conn.setCredentials(credentials)
     this.conn.setIdentificationParams(identificationParams)
+
+    if (verboseConnection) {
+      this.conn.verboseConnectionState = true
+    }
 
     if (autoConnect) {
       this.connect()
