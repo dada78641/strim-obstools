@@ -6,6 +6,7 @@ import type {OBSResponseTypes} from 'obs-websocket-js'
 import type {Constructor} from '../../util/mixins.ts'
 import type {HasObs} from '../../obstools/base.ts'
 import type {Scene, SceneWithSceneItems, SceneItem, Source} from '../../obs/types.ts'
+import type {JsonValue} from '../../types.ts'
 import type {SearchOptions} from './util.ts'
 import {createLogger} from '../../util/logger.ts'
 import {sceneItemToSource, hasTag} from './util.ts'
@@ -146,6 +147,15 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
         }
       }
       return matchingScenes
+    }
+
+    /**
+     * Sends a custom event with a realm.
+     *
+     * This is essentially just a regular custom event using a ruleset I use in my software.
+     */
+    public async sendRealmEvent<T extends JsonValue = any>(realm: string, data: T) {
+      return this.obs.call('BroadcastCustomEvent', {eventData: {realm, data}})
     }
 
     /**

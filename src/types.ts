@@ -3,6 +3,7 @@
 
 export type * from './obs/connection.ts'
 export type * from './obs/types.ts'
+export type * from './obs/json.ts'
 export type * from './obstools/base.ts'
 export type * from './util/index.ts'
 export type * from './mixins/games/index.ts'
