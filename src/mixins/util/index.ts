@@ -154,8 +154,8 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
      *
      * This is essentially just a regular custom event using a ruleset I use in my software.
      */
-    public async sendRealmEvent<T extends JsonValue = any>(realm: string, data: T) {
-      return this.obs.call('BroadcastCustomEvent', {eventData: {realm, data}})
+    public async sendRealmEvent<T = any>(realm: string, data: T) {
+      return this.obs.call('BroadcastCustomEvent', {eventData: {realm, data: data as JsonValue}})
     }
 
     /**
