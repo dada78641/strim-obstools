@@ -12,3 +12,5 @@ export type * from './mixins/util/util.ts'
 export type * from './mixins/util/stats.ts'
 
 export {EventTypes as OBSEventTypes} from 'obs-websocket-js'
+export {OBSResponseTypes} from 'obs-websocket-js'
+export {OBSRequestTypes} from 'obs-websocket-js'
