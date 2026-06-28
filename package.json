@@ -1,7 +1,7 @@
 {
   "name": "@dada78641/strim-obstools",
   "description": "Higher level OBS operations using the websocket",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

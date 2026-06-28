@@ -116,6 +116,15 @@ export interface AudioInput {
   inputSettings: InputSettings
 }
 
+export interface OutputListItem {
+  outputActive: boolean
+  outputFlags: {[key: string]: boolean}
+  outputKind: string
+  outputName: string
+  outputWidth: number
+  outputHeight: number
+}
+
 export interface AudioInputMetadata {
   inputUuid: string
   inputKind: string

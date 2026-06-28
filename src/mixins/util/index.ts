@@ -6,10 +6,15 @@ import type {OBSResponseTypes} from 'obs-websocket-js'
 import type {Constructor} from '../../util/mixins.ts'
 import type {HasObs} from '../../obstools/base.ts'
 import type {Scene, SceneWithSceneItems, SceneItem, Source} from '../../obs/types.ts'
-import type {JsonValue} from '../../types.ts'
+import type {JsonValue, OutputListItem} from '../../types.ts'
 import type {SearchOptions} from './util.ts'
 import {createLogger} from '../../util/logger.ts'
 import {sceneItemToSource, hasTag} from './util.ts'
+import {outputStatusStub, streamingName, recordingName, virtualCamName} from './stats.ts'
+import type {BaseStats, OutputFrames, WebsocketMessages, OutputStatus} from './stats.ts'
+
+// The status is either a live output, or a stub.
+type StatusOutput = OBSResponseTypes['GetOutputStatus'] | (typeof outputStatusStub)
 
 export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
   return class extends Base {
@@ -22,6 +27,74 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
       const res = await this.obs.call('GetSceneList')
       const scenes = res.scenes as unknown as Scene[]
       return scenes
+    }
+
+    /**
+     * Returns the full OBS status.
+     * 
+     * This includes the frames per second, the dropped frames, network congestion, and so on.
+     */
+    public async getSystemStatus(): Promise<BaseStats> {
+      const stats: OBSResponseTypes['GetStats'] = await this.obs.call('GetStats')
+      const outputListRes: OBSResponseTypes['GetOutputList'] = await this.obs.call('GetOutputList')
+      const outputList: OutputListItem[] = outputListRes.outputs as unknown as OutputListItem[]
+      
+      const outputItemStreaming = outputList.find(output => output.outputName === streamingName)
+      const outputItemRecording = outputList.find(output => output.outputName === recordingName)
+      const outputItemVirtualCam = outputList.find(output => output.outputName === virtualCamName)
+
+      const streamingStatus: StatusOutput = outputItemStreaming ? await this.obs.call('GetOutputStatus', {outputName: 'adv_stream'}) : outputStatusStub
+      const recordingStatus: StatusOutput = outputItemRecording ? await this.obs.call('GetOutputStatus', {outputName: 'adv_file_output'}) : outputStatusStub
+      const virtualCamStatus: StatusOutput = outputItemVirtualCam ? await this.obs.call('GetOutputStatus', {outputName: 'virtualcam_output'}) : outputStatusStub
+
+      return {
+        activeFps: stats.activeFps,
+        availableDiskSpace: stats.availableDiskSpace,
+        averageFrameRenderTime: stats.averageFrameRenderTime,
+        cpuUsage: stats.cpuUsage,
+        memoryUsage: stats.memoryUsage,
+        render: {
+          skippedFrames: stats.renderSkippedFrames,
+          totalFrames: stats.renderTotalFrames,
+        },
+        output: {
+          skippedFrames: stats.outputSkippedFrames,
+          totalFrames: stats.outputTotalFrames,
+        },
+        websocket: {
+          incoming: stats.webSocketSessionIncomingMessages,
+          outgoing: stats.webSocketSessionOutgoingMessages,
+        },
+        status: {
+          streaming: this._wrapOutputStatus(streamingStatus, outputItemStreaming, streamingName),
+          recording: this._wrapOutputStatus(recordingStatus, outputItemRecording, recordingName),
+          virtualCam: this._wrapOutputStatus(virtualCamStatus, outputItemVirtualCam, virtualCamName),
+        },
+      }
+    }
+
+    /**
+     * Wraps the output status data into a single object.
+     * 
+     * Used by the system status call.
+     */
+    public _wrapOutputStatus(outputStatus: StatusOutput, outputListItem: OutputListItem | undefined, outputName: string): OutputStatus {
+      return {
+        active: outputStatus.outputActive,
+        reconnecting: outputStatus.outputReconnecting,
+        name: outputName,
+        kind: outputListItem?.outputKind ?? '',
+        width: outputListItem?.outputWidth ?? 0,
+        height: outputListItem?.outputHeight ?? 0,
+        timecode: outputStatus.outputTimecode,
+        duration: outputStatus.outputDuration,
+        bytes: outputStatus.outputBytes,
+        congestion: outputStatus.outputCongestion,
+        output: {
+          skippedFrames: outputStatus.outputSkippedFrames,
+          totalFrames: outputStatus.outputTotalFrames,
+        }
+      }
     }
 
     /**
