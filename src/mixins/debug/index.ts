@@ -46,9 +46,8 @@ export function DebugMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
     public async setBrowserSourceSimulation(value: boolean) {
       this.logger.log('setting browser sources to &simulate: %o', value)
 
-      // Filter browser sources to ones that have aren't local.
-      const browserSources = (await this.getCollectionBrowserSources())
-        .filter(source => source.inputSettings?.url != null)
+      // This applies only to remote browser sources that can have query parameters.
+      const browserSources = await this.getCollectionBrowserSources(true)
       
       // Get only the ones that have &simulate or &_simulate set.
       const simulatableBrowserSources = browserSources.filter(source => {

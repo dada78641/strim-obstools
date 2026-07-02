@@ -199,9 +199,15 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
     /**
      * Returns all browser sources.
      */
-    public async getCollectionBrowserSources(): Promise<Source[]> {
-      const sources = (await this.getCollectionSources())
+    public async getCollectionBrowserSources(onlyRemote = false, onlyLocal = false): Promise<Source[]> {
+      let sources = (await this.getCollectionSources())
         .filter(source => source.inputKind === 'browser_source')
+      if (onlyRemote) {
+        sources = sources.filter(source => source.inputSettings?.url != null)
+      }
+      if (onlyLocal) {
+        sources = sources.filter(source => source.inputSettings?.url == null)
+      }
       return sources
     }
 

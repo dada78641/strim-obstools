@@ -3,6 +3,7 @@
 
 import {ObsToolsBase} from './base.ts'
 import {AudioMixin} from '../mixins/audio/index.ts'
+import {BrowserMixin} from '../mixins/browser/index.ts'
 import {GamesMixin} from '../mixins/games/index.ts'
 import {UtilMixin} from '../mixins/util/index.ts'
 import {TriggersMixin} from '../mixins/triggers/index.ts'
@@ -12,8 +13,9 @@ export * from './base.ts'
 export class ObsTools extends
   UtilMixin(
   AudioMixin(
+  BrowserMixin(
   TriggersMixin(
   GamesMixin(
   DebugMixin(
     ObsToolsBase
-  ))))) {}
+  )))))) {}
