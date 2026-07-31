@@ -128,10 +128,23 @@ export interface OutputListItem {
 export interface AudioInputMetadata {
   inputUuid: string
   inputKind: string
+  inputName: string
   inputSettings: InputSettings
   monitorType: MonitoringType
   inputVolumeDb: number
   inputVolumeMul: number
+}
+
+export interface SourceFilterResult {
+  filters: SourceFilter[]
+}
+
+export interface SourceFilter {
+  filterEnabled: boolean
+  filterIndex: number
+  filterKind: string
+  filterName: string
+  filterSettings: JsonObject
 }
 
 export type InputSettings = {
