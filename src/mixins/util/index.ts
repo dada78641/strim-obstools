@@ -256,6 +256,14 @@ export function UtilMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
           }
         }
       }
+      return matchingSceneItems
+    }
+
+    /**
+     * Returns unique scene items by a given criteria.
+     */
+    public async findUniqueSceneItems(opts: SearchOptions): Promise<SceneItem[]> {
+      const matchingSceneItems = await this.findSceneItems(opts);
       return uniqBy(matchingSceneItems, 'sourceUuid')
     }
   }
