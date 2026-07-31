@@ -8,8 +8,7 @@ import type {SceneItem, SceneWithSceneItems} from '../../obs/types.ts'
 import {UtilMixin} from '../util/index.ts'
 import {extractGameSceneLabel, extractGameTag} from './util.ts'
 import {extractTag} from '../util/util.ts'
-
-const SCENE_GAME_IDENTIFIER = '[[Game]]'
+import {SCENE_GAME_IDENTIFIER} from './const.ts'
 
 export interface GameScene {
   label: string
@@ -43,6 +42,18 @@ export function GamesMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
     }
 
     /**
+     * Returns the primary game scene (the A1 scene).
+     */
+    public async getPrimaryGameScene(): Promise<GameScene> {
+      const gameScenes = await this.getGameScenes()
+      const primaryScene = gameScenes.find(gameScene => gameScene.primary)
+      if (!primaryScene) {
+        throw new Error('No primary game scene found')
+      }
+      return primaryScene
+    }
+
+    /**
      * Returns a list of games that we have scenes for.
      */
     public async getGames(): Promise<string[]> {
@@ -59,11 +70,7 @@ export function GamesMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
      * If no active game can be found, null is returned.
      */
     public async getActiveGame(): Promise<string | null> {
-      const gameScenes = await this.getGameScenes()
-      const primaryScene = gameScenes.find(gameScene => gameScene.primary)
-      if (!primaryScene) {
-        throw new Error('No primary game scene found')
-      }
+      const primaryScene = await this.getPrimaryGameScene()
       const scene = primaryScene.scene
       const res = await this.obs.call('GetSceneItemList', {sceneUuid: scene.sceneUuid})
       const sceneItems = res.sceneItems
