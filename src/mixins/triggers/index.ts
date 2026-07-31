@@ -12,6 +12,13 @@ export interface GlobalState {
   registeredManagers: Set<string>
 }
 
+export interface TriggerManager {
+  name: string
+  addTrigger: (triggerName: string, callback: TriggerCallback) => void
+  addToggle: (triggerName: string, callback: ToggleCallback) => void
+  destroyTriggerManager: () => void
+}
+
 export interface TriggerManagerState {
   sceneUuid: string | null
   sceneItems: SceneItem[]
@@ -69,7 +76,7 @@ export function TriggersMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
      * See the readme.md file for what a trigger manager is. This supports both
      * triggers and toggles.
      */
-    public async createTriggerManager(managerName: string) {
+    public createTriggerManager(managerName: string): TriggerManager {
       this.logger.log('created TriggerManager: %o', managerName)
 
       const state: TriggerManagerState = {
@@ -83,7 +90,7 @@ export function TriggersMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
       /**
        * Initializes the trigger manager by finding the scene and its scene items.
        */
-      const _initTriggerManager = async () => {
+      const _initTriggerManager = () => {
         if (this.hasTriggerManager(managerName)) {
           throw new Error(`TriggerManager already instantiated by this name: ${managerName}`)
         }
@@ -234,7 +241,7 @@ export function TriggersMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
         return _addTriggerItem({name: triggerName, type: 'trigger', callback})
       }
 
-      await _initTriggerManager()
+      _initTriggerManager()
 
       return {
         name: managerName,
