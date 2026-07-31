@@ -4,12 +4,86 @@
 import {uniqBy, sortBy} from 'lodash-es'
 import type {Constructor} from '../../util/mixins.ts'
 import type {HasObs} from '../../obstools/base.ts'
-import type {Input, AudioInput, InputAudioMonitorType, InputVolume, AudioInputMetadata} from '../../obs/types.ts'
+import type {Input, AudioInput, InputAudioMonitorType, InputVolume, AudioInputMetadata, SourceFilter, SourceFilterResult} from '../../obs/types.ts'
 import {UtilMixin} from '../util/index.ts'
-import {inputSupportsAudio} from './util.ts'
+import {inputSupportsAudio, matchMixerItem, findMixerGainFilter} from './util.ts'
+import {extractGameSceneLabel} from '../games/util.ts'
+import {SCENE_GAME_IDENTIFIER} from '../games/const.ts'
+
+export interface MixerProfile {
+  mixerItems: MixerItem[]
+}
+
+export interface MixerItem {
+  name: string
+  baseDb: number
+  rangeDb: number
+  identifiers: string[]
+  inputIcon: string | null
+  inputName: string | null
+  specialInputName: string | null
+}
+
+export interface MixerState {
+  items: {
+    sourceGainFilter: SourceFilter | undefined
+    sourceInput: AudioInputMetadata | undefined
+    mixerItem: MixerItem
+  }[]
+}
 
 export function AudioMixin<TBase extends Constructor<HasObs>>(Base: TBase) {
   return class extends UtilMixin(Base) {
+    /**
+     * Returns all audio-supported inputs for the stream (using the A1 scene as base).
+     * 
+     * This is used for the audio mixer.
+     */
+    public async getStreamAudioInputs() {
+      const scenes = await this.getCollectionScenesWithSceneItems()
+      const primaryGameScene = scenes
+        .find(scene => {
+          const isGame = scene!.sceneName.includes(SCENE_GAME_IDENTIFIER)
+          const isPrimary = extractGameSceneLabel(scene.sceneName) === 'A1'
+          return isGame && isPrimary
+        })
+      if (!primaryGameScene) {
+        throw new Error('No primary game scene found')
+      }
+      const audioInputs = this.getSceneAudioInputs(primaryGameScene.sceneUuid)
+      return audioInputs
+    }
+
+    /**
+     * Returns the audio mixer input state.
+     */
+    public async getAudioMixerInputState(mixerProfile: MixerProfile): Promise<MixerState> {
+      const audioInputs = await this.getStreamAudioInputs()
+      const mixerItems = []
+      for (const mixerItem of mixerProfile.mixerItems) {
+        const input = matchMixerItem(audioInputs, mixerItem)
+        if (!input) {
+          mixerItems.push({
+            sourceGainFilter: undefined,
+            sourceInput: undefined,
+            mixerItem,
+          })
+          continue
+        }
+        const inputFilters = await this.obs.call('GetSourceFilterList', {sourceName: input.inputName}) as unknown as SourceFilterResult
+        const mixerGainFilter = findMixerGainFilter(inputFilters.filters)
+        mixerItems.push({
+          sourceGainFilter: mixerGainFilter,
+          sourceInput: input,
+          mixerItem,
+        })
+      }
+
+      return {
+        items: mixerItems,
+      }
+    }
+
     /**
      * Returns all audio-supporting inputs, with input settings and input kind included.
      * 
